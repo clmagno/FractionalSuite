@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+
+            <div class="col-lg-5 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">
+                        <h4 class="my-0">Base Item Details</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ item_form.category.id_for_label }}" class="form-label">Category</label>
+                            {{ item_form.category }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ item_form.name.id_for_label }}" class="form-label">Item Name</label>
+                            {{ item_form.name }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ item_form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ item_form.description }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="col-lg-7">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h4 class="my-0">Manage Variants (Prices)</h4>
+                    </div>
+                    <div class="card-body">
+                        
+                        {{ variant_formset.management_form }}
+                        
+                        {% for form in variant_formset %}
+                            <div class="row gx-2 mb-3 pb-3 border-bottom">
+                                {{ form.id }} 
+                                
+                                <div class="col-md-5">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">Variant Name</label>
+                                    {{ form.name }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="{{ form.price.id_for_label }}" class="form-label">Price</label>
+                                    {{ form.price }}
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    {% if form.instance.pk %}
+                                        <div class="form-check">
+                                            {{ form.DELETE }}
+                                            <label for="{{ form.DELETE.id_for_label }}" class="form-check-label">Delete</label>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" class="btn btn-primary btn-lg">Save All Changes</button>
+            <a href="{% url 'manage-items' asset_pk=item.asset.pk %}" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+    </form>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Active Deals | FractionalSuite{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Active Investment Opportunities</h1>
+        
+        {% if user.profile.role == 'OWNER' %}
+            <a href="{% url 'deal-create' %}" class="btn btn-primary">Create New Deal</a>
+        {% endif %}
+    </div>
+    <hr class="mb-4">
+
+    {% if deals %}
+        <div class="row">
+            {% for deal in deals %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ deal.title }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                {{ deal.asset.name }}
+                            </h6>
+                            <p class="card-text">
+                                {{ deal.asset.get_asset_type_display }}
+                            </p>
+                            
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Total Raise:</span>
+                                    <strong>₱{{ deal.target_raise_amount|floatformat:2 }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span>Price per Share:</span>
+                                    <strong>₱{{ deal.price_per_share|floatformat:2 }}</strong>
+                                </li>
+                            </ul>
+
+                            <div class="mb-3">
+                                <h6 class="text-muted small">Funding Progress</h6>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar bg-success" 
+                                         role="progressbar" 
+                                         style="width: {{ deal.percentage_sold }}%;" 
+                                         aria-valuenow="{{ deal.percentage_sold }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ deal.percentage_sold|floatformat:0 }}%
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between small fw-bold mt-1">
+                                    <span>
+                                        <span class="text-success">{{ deal.total_shares_sold }}</span> Sold
+                                    </span>
+                                    <span>
+                                        <span class="text-muted">{{ deal.shares_available }}</span> Avail.
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-auto pt-3"> 
+                                <a href="{% url 'deal-detail' pk=deal.pk %}" class="btn btn-primary w-100 mb-2">View Financials</a>
+                                
+                                {% if user.profile.role == 'OWNER' or user.profile.assigned_asset == deal.asset %}
+                                    <a href="{% url 'manage-items' asset_pk=deal.asset.pk %}" class="btn btn-outline-secondary w-100">
+                                        Manage Services
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            There are no active deals at this time.
+        </div>
+    {% endif %}
+{% endblock %}

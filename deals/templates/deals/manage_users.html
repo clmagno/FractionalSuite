@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users | {{ asset.name }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Manage Users</h1>
+        <a href="{% url 'manager-dashboard' %}" class="btn btn-outline-secondary">&larr; Back to Manager Dashboard</a>
+    </div>
+    <h2 class="text-muted fs-4 mb-4">{{ asset.name }}</h2>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center p-4">
+            <h5 class="mb-0">Need to add a new cashier?</h5>
+            <a href="{% url 'user-register' %}" class="btn btn-primary">Add New Cashier</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4 class="my-0">Current Cashier Accounts</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Username</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in cashiers %}
+                            <tr>
+                                <td>{{ user.get_full_name|default:"N/A" }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success-subtle text-success-emphasis">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger-subtle text-danger-emphasis">Deactivated</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+    <a href="{% url 'user-edit' pk=user.pk %}" class="btn btn-sm btn-warning">
+        Edit
+    </a>
+
+    <form method="post" class="d-inline ms-1">
+        {% csrf_token %}
+        <input type="hidden" name="user_pk" value="{{ user.pk }}">
+        {% if user.is_active %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+                Deactivate
+            </button>
+        {% else %}
+            <button type="submit" class="btn btn-sm btn-outline-success">
+                Activate
+            </button>
+        {% endif %}
+    </form>
+</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No cashier accounts have been created for this asset.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

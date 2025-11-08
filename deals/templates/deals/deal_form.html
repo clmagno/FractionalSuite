@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }} | FractionalSuite{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">{{ page_title }}</h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="{{ form.asset.id_for_label }}" class="form-label">Asset</label>
+                    {{ form.asset }}
+                    </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">Deal Title</label>
+                    {{ form.title }}
+                    {% if form.title.help_text %}
+                    <div class="form-text">{{ form.title.help_text }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.target_raise_amount.id_for_label }}" class="form-label">Target Raise Amount (₱)</label>
+                        {{ form.target_raise_amount }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.total_shares_offered.id_for_label }}" class="form-label">Total Shares Offered</label>
+                        {{ form.total_shares_offered }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.price_per_share.id_for_label }}" class="form-label">Price per Share (₱)</label>
+                        {{ form.price_per_share }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ form.launch_date.id_for_label }}" class="form-label">Launch Date</label>
+                    {{ form.launch_date }}
+                </div>
+
+                <div class="form-check mb-3">
+                    {{ form.is_active }}
+                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                        Is this deal active and open for investment?
+                    </label>
+                </div>
+
+                <hr>
+                <button type="submit" class="btn btn-primary">Save Deal</button>
+                {% if object %}
+    <a href="{% url 'deal-detail' pk=object.pk %}" class="btn btn-secondary">Cancel</a>
+{% else %}
+    <a href="{% url 'deal-list' %}" class="btn btn-secondary">Cancel</a>
+{% endif %}
+            </form>
+        </div>
+    </div>
+{% endblock %}

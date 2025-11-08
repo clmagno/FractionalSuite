@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Items | {{ asset.name }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Manage Items</h1>
+        <div>
+            <a href="{% url 'manage-categories' asset_pk=asset.pk %}" class="btn btn-info me-2">
+                Manage Categories
+            </a>
+            <a href="{% url 'manager-dashboard' %}" class="btn btn-outline-secondary">&larr; Back to Dashboard</a>
+        </div>
+    </div>
+    <h2 class="text-muted fs-4 mb-4">{{ asset.name }}</h2>
+
+    <div class="row">
+
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h4 class="my-0">Add New Item</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">Category</label>
+                            {{ form.category }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Item Name</label>
+                            {{ form.name }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ form.description }}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Add Base Item</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h4 class="my-0">Current Items</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                    <tr>
+                                        <td>{{ item.name }}</td>
+                                        <td>{{ item.category.name }}</td>
+                                        <td class="text-end">
+                                            <a href="{% url 'item-edit' pk=item.pk %}" class="btn btn-sm btn-warning">
+                                                Manage Variants
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No items have been added yet.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div> {% endblock %}

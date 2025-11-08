@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ deal.title }} | FractionalSuite{% endblock %}
+
+{% block content %}
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-5">{{ deal.title }}</h1>
+            <h2 class="text-muted fs-4">{{ deal.asset.name }}</h2>
+            <p class="lead">{{ deal.asset.description|linebreaks }}</p>
+        </div>
+        <div class="col-md-4">
+                <a href="{% url 'deal-list' %}" class="btn btn-outline-secondary mb-3 w-100">&larr; Back to All Deals</a>
+                <a href="{% url 'deal-edit' pk=deal.pk %}" class="btn btn-warning btn-lg w-100 mb-2">Edit This Deal</a>
+                <a href="{% url 'pos-view' pk=deal.pk %}" class="btn btn-info btn-lg w-100">Go to Sales Portal</a>
+            </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h4 class="my-0">Financial Snapshot</h4>
+            </div>
+            <div class="card-body p-4">
+
+                <h6 class="text-muted">Funding Progress</h6>
+                <div class="progress mb-2" style="height: 25px;">
+                    <div class="progress-bar bg-success" 
+                         role="progressbar" 
+                         style="width: {{ deal.percentage_sold }}%;" 
+                         aria-valuenow="{{ deal.percentage_sold }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ deal.percentage_sold|floatformat:1 }}% Sold
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between fw-bold">
+                    <span>
+                        <span class="text-success">{{ deal.total_shares_sold }}</span> Sold
+                    </span>
+                    <span>
+                        <span class="text-muted">{{ deal.shares_available }}</span> Available
+                    </span>
+                    <span>
+                        <span class="text-dark">{{ deal.total_shares_offered }}</span> Total
+                    </span>
+                </div>
+                
+                <hr>
+                <div class="row text-center"> <div class="col-md-4">
+                        <h5 class="text-muted">Current Share Value (NAV)</h5>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <h5 class="text-muted">Current Share Value (NAV)</h5>
+                    <p class="fs-3">₱{{ current_share_value|floatformat:2 }}</p>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="text-muted">Initial Share Price</h5>
+                    <p class="fs-3">₱{{ deal.price_per_share|floatformat:2 }}</p>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="text-muted">Total Target Raise</h5>
+                    <p class="fs-3">₱{{ deal.target_raise_amount|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        
+        <div class="col-lg-7 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0">Recent Transactions</h4>
+                    <a href="{% url 'deal-transactions' pk=deal.pk %}" class="btn btn-outline-primary btn-sm">
+                        Manage All Transactions
+                    </a>
+                </div>
+                <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions|slice:":5" %} 
+                            <tr>
+                                <td>{{ tx.transaction_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if tx.transaction_type == 'INCOME' %} bg-success-subtle text-success-emphasis
+                                        {% elif tx.transaction_type == 'EXPENSE' %} bg-danger-subtle text-danger-emphasis
+                                        {% else %} bg-secondary-subtle text-secondary-emphasis
+                                        {% endif %}">
+                                        {{ tx.get_transaction_type_display }}
+                                    </span>
+                                </td>
+                                <td>{{ tx.description }}</td>
+                                <td class="text-end">₱{{ tx.amount|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No transactions recorded yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-lg-5 mb-4">
+            <h4>Valuation History</h4>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th class="text-end">Total Valuation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for val in valuations %}
+                            <tr>
+                                <td>{{ val.valuation_date|date:"M d, Y" }}</td>
+                                <td>{{ val.valuation_method }}</td>
+                                <td class="text-end">₱{{ val.total_valuation|floatformat:2 }}</td>
+                            tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No valuation history.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm my-4">
+        <div class="card-header">
+            <h4 class="my-0">Current Investors in this Deal</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Investor</th>
+                            <th>Shares Held</th>
+                            <th>Total Cost Basis</th>
+                            <th>% Ownership</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for holding in holdings %}
+                            <tr>
+                                <td>{{ holding.investor.get_full_name|default:holding.investor.username }}</td>
+                                <td>{{ holding.shares_held }}</td>
+                                <td>₱{{ holding.total_cost_basis|floatformat:2 }}</td>
+                                <td>
+                                    {% widthratio holding.shares_held deal.total_shares_offered 100 as ownership_pct %}
+                                    {{ ownership_pct|floatformat:2 }}%
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">No investors have been added to this deal yet.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+   <div class="card shadow-sm my-4">
+            <div class="card-header">
+                <h4 class="my-0">Add New Investor Holding</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="holding-form" data-price-per-share="{{ deal.price_per_share }}">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.investor.id_for_label }}" class="form-label">Investor</label>
+                            {{ form.investor }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.shares_held.id_for_label }}" class="form-label">Shares Held</label>
+                            {{ form.shares_held }}
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading mb-0">Auto-Calculated Cost</h5>
+                        <p class="fs-4 fw-bold mb-0" id="calculated-cost">₱0.00</p>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Add Holding</button>
+                </form>
+            </div>
+        </div>
+    {% endblock %} {% block scripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('holding-form');
+            const sharesField = document.getElementById('id_shares_held');
+            const costDisplay = document.getElementById('calculated-cost');
+            
+            // Get the price per share from our data- attribute
+            const pricePerShare = parseFloat(form.dataset.pricePerShare) || 0;
+
+            if (sharesField) {
+                sharesField.addEventListener('input', function() {
+                    const shares = parseInt(sharesField.value) || 0;
+                    const totalCost = (shares * pricePerShare);
+                    
+                    // Format as currency
+                    costDisplay.textContent = '₱' + totalCost.toLocaleString(
+                        'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                    );
+                });
+            }
+        });
+    </script>
+    {% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}POS Terminal | {{ asset.name }}{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">POS Terminal</h1>
+        {% if user.profile.role != 'CASHIER' %}
+            <a href="{% url 'deal-detail' pk=deal.pk %}" class="btn btn-outline-secondary">&larr; Back to Deal Details</a>
+        {% endif %}
+    </div>
+    <h2 class="text-muted fs-4 mb-4">{{ asset.name }}</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert 
+                {% if message.tags == 'success' %} alert-success 
+                {% elif message.tags == 'warning' %} alert-warning
+                {% elif message.tags == 'error' %} alert-danger
+                {% else %} alert-info {% endif %}
+                alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <ul class="nav nav-pills card-header-pills">
+                        <li class="nav-item">
+                            <a class="nav-link {% if not active_category_id %}active{% endif %}" 
+                               href="{% url 'pos-view' pk=deal.pk %}">
+                               All
+                            </a>
+                        </li>
+                        {% for category in categories %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_category_id == category.id %}active{% endif %}" 
+                               href="?category={{ category.id }}">
+                               {{ category.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                
+<div class="card-body">
+                    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+                        {% for item in items %}
+                        <div class="col">
+                            <button type="button" 
+                                    class="btn btn-primary w-100 h-100 p-3 fs-5" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#variantsModal-{{ item.id }}">
+                                {{ item.name }}
+                            </button>
+                        </div>
+
+                        <div class="modal fade" id="variantsModal-{{ item.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Select Option for {{ item.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="list-group">
+                                            {% for variant in item.variants.all %}
+                                                <form method="post" class="list-group-item list-group-item-action">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="variant_id" value="{{ variant.id }}">
+                                                    <button type="submit" name="add_to_cart" 
+                                                            class="btn btn-link text-start text-decoration-none w-100 p-0">
+                                                        <div class="d-flex w-100 justify-content-between">
+                                                            <h5 class="mb-1">{{ variant.name }}</h5>
+                                                            <strong class="text-success">₱{{ variant.price|floatformat:2 }}</strong>
+                                                        </div>
+                                                    </button>
+                                                </form>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-center">No items found in this category.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-header"><h4 class="my-0">Current Sale (Cart)</h4></div>
+                <div class="card-body p-4">
+                    
+                    <ul class="list-group mb-3">
+                        {% for item in cart_items %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="my-0">{{ item.name }}</h6>
+                                </div>
+                                <span class="text-muted me-3">₱{{ item.price|floatformat:2 }}</span>
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="variant_id" value="{{ item.id }}">
+                                    <button type="submit" name="remove_from_cart" class="btn btn-sm btn-outline-danger">
+                                        X
+                                    </button>
+                                </form>
+                            </li>
+                        {% endfor %}
+
+                        <li class="list-group-item d-flex justify-content-between bg-light">
+                            <span class="fs-5">Total</span>
+                            <strong class="fs-5">₱{{ cart_total|floatformat:2 }}</strong>
+                        </li>
+                    </ul>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="customer_name" class="form-label">Customer Name (Optional)</label>
+                            <input type="text" name="customer_name" class="form-control" placeholder="Walk-in">
+                        </div>
+                        <hr>
+                        <button type="submit" name="checkout" class="btn btn-success btn-lg w-100"
+                            {% if not cart_items %}disabled{% endif %}>
+                            Finalize Sale & Checkout
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

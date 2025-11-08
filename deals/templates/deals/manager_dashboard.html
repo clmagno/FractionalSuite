@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Manager Dashboard | {{ asset.name }}{% endblock %}
+
+{% block content %}
+    <h1 class="mb-3">Manager Dashboard</h1>
+    <h2 class="text-muted fs-4 mb-4">{{ asset.name }}</h2>
+
+    <div class="row g-4"> 
+        
+       <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center d-flex flex-column justify-content-center p-4">
+                    <h5 class="card-title">Manage Items</h5>
+                    <p class="card-text text-muted">Configure all products and services for this asset.</p>
+                    <a href="{% url 'manage-services' asset_pk=asset.pk %}" class="btn btn-primary mt-2">Go to Items</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center p-4">
+                    <h5 class="card-title">Manage Categories</h5>
+                    <p class="card-text text-muted small">Add or edit service categories (e.g., "Nail Services").</p>
+                    <a href="{% url 'manage-categories' asset_pk=asset.pk %}" class="btn btn-primary mt-2">Go to Categories</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center p-4">
+                    <h5 class="card-title">Manage Users</h5>
+                    <p class="card-text text-muted small">Add, Edit, or deactivate cashier accounts.</p>
+                    <a href="{% url 'manage-users' %}" class="btn btn-primary mt-2">Go to Users</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100">
+                <div class="card-body text-center d-flex flex-column justify-content-center p-4">
+                    <h5 class="card-title">Sales Report</h5>
+                    <p class="card-text text-muted small">View and download sales reports.</p>
+                    <a href="{% url 'sales-report' %}" class="btn btn-primary mt-2">Go to Reports</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Sales Report</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 20px;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+            <td style="padding: 20px; background-color: #f8f9fa;">
+
+                <h1 style="margin: 0; color: #333;">Sales Report</h1>
+                <h2 style="margin: 0 0 20px 0; color: #555;">{{ asset.name }}</h2>
+
+                <p style="font-size: 16px;">
+                    Here is the sales summary for the period of <strong>{{ date_from }}</strong> to <strong>{{ date_to }}</strong>.
+                </p>
+
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #fff;" border="1" cellpadding="10">
+                    <tr style="background-color: #343a40; color: #fff;">
+                        <th style="padding: 12px; text-align: left;">Total Transactions</th>
+                        <th style="padding: 12px; text-align: right;">Total Sales</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; font-size: 18px;">{{ transactions|length }}</td>
+                        <td style="padding: 12px; font-size: 24px; text-align: right; color: #28a745; font-weight: bold;">
+                            ₱{{ total_sales|floatformat:2 }}
+                        </td>
+                    </tr>
+                </table>
+
+                <h3 style="margin-top: 30px; color: #333;">Transaction Details</h3>
+                <table style="width: 100%; border-collapse: collapse; background-color: #fff;" border="1" cellpadding="10">
+                    <tr style="background-color: #f1f1f1;">
+                        <th style="text-align: left; padding: 10px;">Date</th>
+                        <th style="text-align: left; padding: 10px;">Description</th>
+                        <th style="text-align: right; padding: 10px;">Amount</th>
+                    </tr>
+                    {% for tx in transactions %}
+                    <tr>
+                        <td style="padding: 10px; width: 150px;">{{ tx.transaction_date|date:"M d, Y, P" }}</td>
+                        <td style="padding: 10px;">{{ tx.description }}</td>
+                        <td style="padding: 10px; text-align: right; font-weight: bold; color: #333;">
+                            +₱{{ tx.amount|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" style="padding: 10px; text-align: center;">No sales recorded for this period.</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
