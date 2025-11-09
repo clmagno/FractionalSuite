@@ -30,7 +30,7 @@
         <div class="col-lg-7">
             <div class="card shadow-sm">
                 <div class="card-header">
-                    <ul class="nav nav-pills card-header-pills">
+                    <ul class="nav nav-pills card-header-pills flex-nowrap overflow-auto">
                         <li class="nav-item">
                             <a class="nav-link {% if not active_category_id %}active{% endif %}" 
                                href="{% url 'pos-view' pk=deal.pk %}">
@@ -49,51 +49,51 @@
                 </div>
                 
 <div class="card-body">
-                    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
-                        {% for item in items %}
-                        <div class="col">
-                            <button type="button" 
-                                    class="btn btn-primary w-100 h-100 p-3 fs-5" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#variantsModal-{{ item.id }}">
-                                {{ item.name }}
-                            </button>
-                        </div>
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
+        {% for item in items %}
+        <div class="col my-2">
+            <button type="button" 
+                    class="btn btn-primary w-100 h-100 p-3 fs-5 my-2" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#variantsModal-{{ item.id }}">
+                {{ item.name }}
+            </button>
+        </div>
 
-                        <div class="modal fade" id="variantsModal-{{ item.id }}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Select Option for {{ item.name }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="list-group">
-                                            {% for variant in item.variants.all %}
-                                                <form method="post" class="list-group-item list-group-item-action">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="variant_id" value="{{ variant.id }}">
-                                                    <button type="submit" name="add_to_cart" 
-                                                            class="btn btn-link text-start text-decoration-none w-100 p-0">
-                                                        <div class="d-flex w-100 justify-content-between">
-                                                            <h5 class="mb-1">{{ variant.name }}</h5>
-                                                            <strong class="text-success">₱{{ variant.price|floatformat:2 }}</strong>
-                                                        </div>
-                                                    </button>
-                                                </form>
-                                            {% endfor %}
+        <div class="modal fade" id="variantsModal-{{ item.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select Option for {{ item.name }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="list-group">
+                            {% for variant in item.variants.all %}
+                                <form method="post" class="list-group-item list-group-item-action">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="variant_id" value="{{ variant.id }}">
+                                    <button type="submit" name="add_to_cart" 
+                                            class="btn btn-link text-start text-decoration-none w-100 p-0">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">{{ variant.name }}</h5>
+                                            <strong class="text-success">₱{{ variant.price|floatformat:2 }}</strong>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
+                                    </button>
+                                </form>
+                            {% endfor %}
                         </div>
-                        {% empty %}
-                        <div class="col-12">
-                            <p class="text-center">No items found in this category.</p>
-                        </div>
-                        {% endfor %}
                     </div>
                 </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p class="text-center">No items found in this category.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
             </div>
         </div>
 
