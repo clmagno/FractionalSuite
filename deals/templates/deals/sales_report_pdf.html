@@ -5,170 +5,216 @@
     <meta charset="UTF-8">
     <title>Sales Report - {{ asset.name }}</title>
     <style>
-        /* This CSS is for the PDF, not a webpage */
+        /* --- CORE PDF STYLES (Robust & Clean) --- */
         @page {
             size: A4;
-            margin: 2.5cm 1.5cm; /* Standard A4 margins */
-            
-            /* We can add footers later */
-            @bottom-center {
-                content: "Page " counter(page) " of " counter(pages);
-                font-family: Arial, sans-serif;
-                font-size: 10pt;
-            }
+            margin: 1.5cm;
         }
         body {
-            font-family: Arial, sans-serif;
-            font-size: 11pt;
-            line-height: 1.5;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            font-size: 10pt;
             color: #333;
         }
+        
+        /* --- VIBRANT COLORS & HEADERS --- */
         h1 {
-            color: #2c3e50;
             font-size: 24pt;
+            color: #172b4d; /* Corporate Dark Blue */
             margin: 0;
-            text-align: right;
+            padding: 0;
+            font-weight: bold;
         }
         h2 {
-            font-size: 18pt;
-            margin: 0;
-            color: #7f8c8d;
-        }
-        .header {
-            margin-bottom: 40px;
-        }
-        .header-left {
-            width: 60%;
-            float: left;
-        }
-        .header-right {
-            width: 40%;
-            float: right;
-            text-align: right;
-        }
-        .report-info {
-            margin-bottom: 30px;
-            font-size: 12pt;
-        }
-        
-        /* Main Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #bdc3c7;
-            padding: 8px 12px;
-            text-align: left;
-        }
-        thead th {
-            background-color: #ecf0f1;
+            font-size: 14pt;
             color: #34495e;
+            margin-top: 25px; 
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .header-title {
+            color: #555;
             font-size: 10pt;
+            font-weight: bold;
             text-transform: uppercase;
         }
-        tbody tr:nth-child(even) {
-            background-color: #f8f9fa;
+        
+        /* --- SALES SUMMARY LAYOUT (CRITICAL FIX) --- */
+        .summary-box {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
         }
-        .text-right {
+        .summary-box td {
+            border: none;
+            padding: 5px 0;
+            width: 25%; /* Four columns */
+            vertical-align: top;
+        }
+        .summary-label {
+            font-size: 9pt;
+            color: #666;
+            padding-left: 5px;
+        }
+        .summary-value {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #172b4d; /* Dark Blue for values */
             text-align: right;
+            font-family: 'Consolas', monospace; /* For clean alignment */
+            padding-right: 5px;
+        }
+
+        /* --- DETAIL TABLES (Fixed Widths) --- */
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        .detail-table th, .detail-table td {
+            border: none;
+            border-bottom: 1px solid #e0e0e0; /* Lighter border */
+            padding: 8px 10px;
+            font-size: 9.5pt;
+        }
+        .detail-table thead th {
+            background-color: #f5f5f5; /* Light header background */
+            color: #555;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom-width: 2px;
+            font-size: 9pt;
         }
         
-        /* Summary */
-        .summary {
-            margin-top: 30px;
-            width: 50%;
-            float: right;
-            font-size: 14pt;
-        }
-        .summary th {
-            text-align: right;
-            width: 50%;
-            border: none;
-            padding: 5px;
-        }
-        .summary td {
-            text-align: right;
-            border: none;
-            padding: 5px;
-        }
-        .total {
+        /* Monospace and vibrant currency */
+        .money {
+            font-family: 'Consolas', monospace;
             font-weight: bold;
-            font-size: 16pt;
-            color: #2c3e50;
+            color: #28a745; /* Vibrant Green for Revenue/Income */
+            text-align: right;
         }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-left">
-            <h2>{{ asset.name }}</h2>
-            <p style="color: #7f8c8d;">
-                {{ asset.location }}<br>
-                TIN: {{ asset.tin_number }}
-            </p>
-        </div>
-        <div class="header-right">
-            <h1>SALES REPORT</h1>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-
-    <div class="report-info">
-        <strong>Report Date:</strong> {{ today }}<br>
-        <strong>Period Covered:</strong> {{ date_from }} to {{ date_to }}
-    </div>
     
-    <table>
+    <h1>End of Day Report</h1>
+    <p style="font-size: 9pt; color: #7f8c8d;">
+        Generated: {{ generated_at|date:"m/d/Y \a\t g:i A" }}
+    </p>
+    
+    <table class="main-layout">
+        <tr style="background-color: #f0f0f0;">
+            <th class="header-label text-left">Store</th>
+            <th class="header-label text-left">Date</th>
+            <th class="header-label text-right">Cashier</th>
+        </tr>
+        <tr>
+            <td class="header-value">{{ asset.name }}</td>
+            <td class="header-value">{{ date_from }} to {{ date_to }}</td>
+            <td class="header-value text-right">All Cashiers</td>
+        </tr>
+    </table>
+
+    <h2 style="margin-top: 30px;">Sales Summary</h2>
+    <table class="summary-layout">
+        <tr>
+            <td class="summary-label">Gross Sales</td>
+            <td class="summary-value summary-data">P{{ summary_data.gross_sales|floatformat:2 }}</td>
+            <td class="summary-label">Number of Transactions</td>
+            <td class="summary-value summary-data">{{ summary_data.num_transactions }}</td>
+        </tr>
+        <tr>
+            <td class="summary-label">Subtotal (VAT-Excl)</td>
+            <td class="summary-value summary-data">P{{ summary_data.subtotal|floatformat:2 }}</td>
+            <td class="summary-label">Average Sale Value</td>
+            <td class="summary-value summary-data">P{{ summary_data.avg_sale_value|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td class="summary-label">Total Tax (12%)</td>
+            <td class="summary-value summary-data">P{{ summary_data.vat_total|floatformat:2 }}</td>
+            <td></td>
+            <td></td>
+        </tr>
+    </table>
+
+    <h2>Sales by Category</h2>
+    <table class="detail-table">
         <thead>
             <tr>
-                <th>Date/Time</th>
-                <th>Sale ID</th>
-                <th>Item</th>
-                <th>Variant</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Unit Price</th>
-                <th class="text-right">Line Total</th>
+                <th class="text-left" style="width: 45%;">Category</th>
+                <th class="text-left" style="width: 15%;">Items Sold</th>
+                <th class="text-left" style="width: 25%;">Net Sales (PHP)</th>
+                <th class="text-left" style="width: 15%;">% of Total</th>
             </tr>
         </thead>
         <tbody>
-            {% for item in sale_items %}
+            {% for cat in category_summary %}
             <tr>
-                <td>{{ item.sale.created_at|date:"Y-m-d H:i" }}</td>
-                <td>{{ item.sale.pk }}</td>
-                <td>{{ item.variant.item.name }}</td>
-                <td>{{ item.variant.name }}</td>
-                <td class="text-right">{{ item.quantity }}</td>
-                <td class="text-right">₱{{ item.price_at_sale|floatformat:2 }}</td>
-                <td class="text-right">₱{{ item.total_price|floatformat:2 }}</td>
+                <td class="text-left">{{ cat.name }}</td>
+                <td class="text-center">{{ cat.items_sold }}</td>
+                <td class="text-left money">P{{ cat.net_sales|floatformat:2 }}</td>
+                <td class="text-left">{{ cat.percent_of_total|floatformat:1 }}%</td>
             </tr>
             {% empty %}
-            <tr>
-                <td colspan="7" style="text-align: center;">No sales found for this period.</td>
-            </tr>
+            <tr><td colspan="4" class="text-center">No sales in this period.</td></tr>
             {% endfor %}
         </tbody>
     </table>
-
-    <div class="summary">
-        <table>
-            <tbody>
-                <tr>
-                    <th>VATable Sales:</th>
-                    <td>₱{{ vatable_sales|floatformat:2 }}</td>
-                </tr>
-                <tr>
-                    <th>VAT (12%):</th>
-                    <td>₱{{ vat_amount|floatformat:2 }}</td>
-                </tr>
-                <tr class="total">
-                    <th>Total Sales:</th>
-                    <td>₱{{ total_sales|floatformat:2 }}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    
+    <h2>Top Selling Items</h2>
+    <table class="detail-table">
+        <thead>
+            <tr>
+                <th class="text-left" style="width: 5%;">Rank</th>
+                <th class="text-left" style="width: 30%;">Item Name (Variant)</th>
+                <th class="text-left" style="width: 25%;">Category</th>
+                <th class="text-left" style="width: 15%;">Qty Sold</th>
+                <th class="text-left" style="width: 25%;">Total Revenue (PHP)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in top_items %}
+            <tr>
+                <td class="text-left">{{ forloop.counter }}</td>
+                <td class="text-left">{{ item.name }}</td>
+                <td class="text-left">{{ item.category }}</td>
+                <td class="text-center">{{ item.qty_sold }}</td>
+                <td class="text-left money">P{{ item.total_revenue|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center">No items sold in this period.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <h2>Detailed Transaction Log</h2>
+    <table class="detail-table">
+        <thead>
+            <tr>
+                <th style="width: 18%;">Date/Time</th>
+                <!-- <th style="width: 10%;">Sale ID</th> -->
+                 <th class="text-right" style="width: 7%;">Qty</th>
+                <th style="width: 45%;">Item (Variant)</th>
+                <th class="text-left" style="width: 20%;">Line Total (PHP)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in detailed_items %}
+            <tr>
+                <td>{{ item.sale.created_at|date:"Y-m-d H:i" }}</td>
+                <!-- <td>{{ item.sale.pk }}</td> -->
+                <td class="text-center">{{ item.quantity }}</td>
+                <td>{{ item.variant.item.name }} ({{ item.variant.name }})</td>
+                
+                <td class="text-left money">P{{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center">No transactions found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
 </body>
 </html>

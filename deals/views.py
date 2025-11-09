@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User 
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Count
 from django.forms import inlineformset_factory
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
@@ -318,8 +318,8 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 @login_required
 def sales_report_view(request):
     """
-    Shows a filterable sales report for a Manager's
-    assigned asset, with PDF and CSV download.
+    Shows a filterable, professional sales report (like the sample)
+    for a Manager's assigned asset.
     """
     profile = request.user.profile
 
@@ -330,46 +330,103 @@ def sales_report_view(request):
     
     manager_asset = profile.assigned_asset
 
-    # --- 2. Get Form Data ---
+    # --- 2. Get Form Data (with better defaults) ---
     form = SalesReportForm(request.GET or None)
-    
-    # Get dates from form, or default to today
     today = datetime.date.today()
-    date_from_str = request.GET.get('date_from', today.strftime('%Y-%m-%d'))
-    date_to_str = request.GET.get('date_to', today.strftime('%Y-%m-%d'))
+    
+    first_sale = Sale.objects.filter(deal__asset=manager_asset).order_by('created_at').first()
+    default_date_from = first_sale.created_at.date() if first_sale else today
+    
+    date_from_str = request.GET.get('date_from') or default_date_from.strftime('%Y-%m-%d')
+    date_to_str = request.GET.get('date_to') or today.strftime('%Y-%m-%d')
 
-    # --- 3. Get Base Queryset for DETAILED items ---
-    sale_items_query = SaleItem.objects.filter(
-        sale__deal__asset=manager_asset
-    ).select_related(
-        'sale', 'sale__cashier', 'variant', 'variant__item', 'variant__item__category'
+    # --- 3. Get Base Queryset (All sales in the date range) ---
+    sales = Sale.objects.filter(
+        deal__asset=manager_asset,
+        created_at__date__gte=date_from_str,
+        created_at__date__lte=date_to_str
+    ).prefetch_related('items')
+
+    # --- 4. Calculate Summary Data (for the sample image) ---
+    
+    # 4a. Sales Summary
+    summary_data = sales.aggregate(
+        gross_sales=Sum('total_amount'),
+        num_transactions=Count('id')
     )
-
-    if date_from_str:
-        sale_items_query = sale_items_query.filter(sale__created_at__date__gte=date_from_str)
-    if date_to_str:
-        sale_items_query = sale_items_query.filter(sale__created_at__date__lte=date_to_str)
-        
-    sale_items = sale_items_query.order_by('sale__created_at')
-
-    # --- 4. Calculate Totals (VAT-Inclusive) ---
-    total_sales = sale_items.aggregate(total=Sum(F('price_at_sale') * F('quantity')))['total'] or Decimal('0.00')
+    total_sales = summary_data['gross_sales'] or Decimal('0.00')
+    num_transactions = summary_data['num_transactions'] or 0
+    
     vatable_sales = total_sales / Decimal('1.12')
     vat_amount = total_sales - vatable_sales
+    avg_sale_value = total_sales / num_transactions if num_transactions > 0 else Decimal('0.00')
+
+    summary_data.update({
+        'gross_sales': total_sales,
+        'vat_total': vat_amount,
+        'subtotal': vatable_sales,
+        'num_transactions': num_transactions,
+        'avg_sale_value': avg_sale_value
+    })
+
+    # 4b. Get all SaleItems in this date range
+    sale_items_query = SaleItem.objects.filter(sale__in=sales).select_related(
+        'variant__item__category'
+    )
+    
+    # 4c. Sales by Category
+    category_summary = {}
+    for item in sale_items_query:
+        cat_name = item.variant.item.category.name
+        if cat_name not in category_summary:
+            category_summary[cat_name] = {'items_sold': 0, 'net_sales': Decimal('0.00')}
+        
+        category_summary[cat_name]['items_sold'] += item.quantity
+        category_summary[cat_name]['net_sales'] += item.total_price
+    
+    category_summary_list = []
+    for name, data in category_summary.items():
+        percent = (data['net_sales'] / total_sales * 100) if total_sales > 0 else 0
+        category_summary_list.append({
+            'name': name,
+            'items_sold': data['items_sold'],
+            'net_sales': data['net_sales'],
+            'percent_of_total': percent
+        })
+    category_summary_list.sort(key=lambda x: x['net_sales'], reverse=True)
+
+
+    # 4d. Top Selling Items
+    top_items = {}
+    for item in sale_items_query:
+        item_name = f"{item.variant.item.name} ({item.variant.name})"
+        cat_name = item.variant.item.category.name
+        
+        if item_name not in top_items:
+            top_items[item_name] = {
+                'category': cat_name, 
+                'qty_sold': 0, 
+                'total_revenue': Decimal('0.00')
+            }
+        
+        top_items[item_name]['qty_sold'] += item.quantity
+        top_items[item_name]['total_revenue'] += item.total_price
+        
+    top_items_list = [{'name': name, **data} for name, data in top_items.items()]
+    top_items_list.sort(key=lambda x: x['qty_sold'], reverse=True)
 
     # --- 5. Handle Downloads ---
-    
-    # --- PDF Download ---
     if request.GET.get('download') == 'pdf':
         context = {
             'asset': manager_asset,
-            'sale_items': sale_items,
-            'total_sales': total_sales,
-            'vatable_sales': vatable_sales,
-            'vat_amount': vat_amount,
+            'summary_data': summary_data,
+            'category_summary': category_summary_list,
+            'top_items': top_items_list[:5], # Get top 5
+            'detailed_items': sale_items_query.order_by('sale__created_at'),
             'date_from': date_from_str,
             'date_to': date_to_str,
             'today': today.strftime('%Y-%m-%d'),
+            'generated_at': timezone.now()
         }
         html_string = render_to_string('deals/sales_report_pdf.html', context)
         result = BytesIO()
@@ -379,13 +436,12 @@ def sales_report_view(request):
         )
         if not pdf.err:
             response = HttpResponse(result.getvalue(), content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="sales_report_{manager_asset.name}.pdf"'
+            response['Content-Disposition'] = f'attachment; filename="EOD_Report_{manager_asset.name}_{date_to_str}.pdf"'
             return response
         else:
             messages.error(request, "There was an error generating the PDF.")
             return redirect('sales-report')
 
-    # --- CSV Download ---
     if request.GET.get('download') == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="sales_report_DETAILED_{manager_asset.name}.csv"'
@@ -395,7 +451,7 @@ def sales_report_view(request):
             'Sale ID', 'Date', 'Time', 'Cashier', 'Customer', 
             'Category', 'Item', 'Variant', 'Qty', 'Unit Price', 'Line Total'
         ])
-        for item in sale_items:
+        for item in sale_items_query.order_by('sale__created_at'): # <-- Use the filtered query
             writer.writerow([
                 item.sale.pk,
                 item.sale.created_at.strftime('%Y-%m-%d'),
@@ -411,24 +467,20 @@ def sales_report_view(request):
             ])
         return response
 
-    # --- 6. Render the HTML page (for web view) ---
-    web_transactions = Transaction.objects.filter(
-        deal__asset=manager_asset,
-        transaction_type='INCOME',
-        transaction_date__date__gte=date_from_str,
-        transaction_date__date__lte=date_to_str
-    ).order_by('-transaction_date')
-    
+    # --- 6. Render the HTML page ---
     context = {
         'asset': manager_asset,
         'form': form,
-        'transactions': web_transactions,
-        'total_sales': total_sales,
+        'summary_data': summary_data,
+        'category_summary': category_summary_list,
+        'top_items': top_items_list[:5], # Get top 5
+        'detailed_items': sale_items_query.order_by('-sale__created_at'), # Pass detailed list, sorted
+        'total_sales': total_sales, # Keep this for the green box
     }
     return render(request, 'deals/sales_report.html', context)
 
 
-# --- MANAGE ITEMS VIEW ---
+# --- MANAGE ITEMS (REPLACING MANAGE SERVICES) ---
 @login_required
 def manage_items_view(request, asset_pk):
     """
@@ -449,15 +501,15 @@ def manage_items_view(request, asset_pk):
     category_queryset = Category.objects.filter(asset=asset)
 
     if request.method == 'POST':
-        form = ItemForm(request.POST) 
+        form = ItemForm(request.POST)
         form.fields['category'].queryset = category_queryset
         
         if form.is_valid():
-            item = form.save() 
+            item = form.save()
             messages.success(request, f"Item '{item.name}' created successfully.")
-            return redirect('manage-items', asset_pk=asset.pk) 
+            return redirect('manage-items', asset_pk=asset.pk)
     else:
-        form = ItemForm() 
+        form = ItemForm()
         form.fields['category'].queryset = category_queryset
 
     items = Item.objects.filter(category__asset=asset).order_by('category__name', 'name')
@@ -465,9 +517,9 @@ def manage_items_view(request, asset_pk):
     context = {
         'asset': asset,
         'form': form,
-        'items': items, 
+        'items': items,
     }
-    return render(request, 'deals/manage_items.html', context) 
+    return render(request, 'deals/manage_items.html', context)
 
 
 # --- ITEM/VARIANT UPDATE VIEW ---

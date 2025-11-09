@@ -3,48 +3,81 @@
 {% block title %}Manager Dashboard | {{ asset.name }}{% endblock %}
 
 {% block content %}
+    <style>
+        .card-button {
+            transition: all 0.2s ease-in-out;
+            overflow: hidden;
+        }
+        .card-button:hover {
+            transform: scale(1.03);
+            background-color: #f8f9fa;
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+        }
+    </style>
+
     <h1 class="mb-3">Manager Dashboard</h1>
     <h2 class="text-muted fs-4 mb-4">{{ asset.name }}</h2>
 
     <div class="row g-4"> 
         
-       <div class="col-lg-3 col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center d-flex flex-column justify-content-center p-4">
-                    <h5 class="card-title">Manage Items</h5>
-                    <p class="card-text text-muted">Configure all products and services for this asset.</p>
-                    <a href="{% url 'manage-items' asset_pk=asset.pk %}" class="btn btn-primary mt-2">Go to Items</a>
-                </div>
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 shadow-sm card-button">
+                <a href="{% url 'manage-items' asset_pk=asset.pk %}" 
+                   class="d-flex flex-column justify-content-center w-100 h-100 p-4 text-decoration-none">
+                    
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#0d6efd" class="bi bi-list-check mb-3 mx-auto" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0zm0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708L2 11.293l1.146-1.147a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                    
+                    <h5 class="card-title text-primary mb-1 text-center">Manage Items</h5>
+                    <p class="card-text text-muted small mb-0 text-center">Configure products and services.</p>
+                </a>
             </div>
         </div>
 
         <div class="col-lg-3 col-md-6">
-            <div class="card h-100">
-                <div class="card-body text-center d-flex flex-column justify-content-center p-4">
-                    <h5 class="card-title">Manage Categories</h5>
-                    <p class="card-text text-muted small">Add or edit service categories (e.g., "Nail Services").</p>
-                    <a href="{% url 'manage-categories' asset_pk=asset.pk %}" class="btn btn-primary mt-2">Go to Categories</a>
-                </div>
+            <div class="card h-100 shadow-sm card-button">
+                <a href="{% url 'manage-categories' asset_pk=asset.pk %}" 
+                   class="d-flex flex-column justify-content-center w-100 h-100 p-4 text-decoration-none">
+                   
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#17a2b8" class="bi bi-tags-fill mb-3 mx-auto" viewBox="0 0 16 16">
+                      <path d="M2 2a1 1 0 0 1 1-1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 2 6.586V2zm3.5 4a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                      <path d="M1.293 7.793A1 1 0 0 1 1 7.086V2a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l.043-.043-4.586-4.586a1 1 0 0 1 0-1.414l4.586-4.586a1 1 0 0 1 1.414 0l.043.043L1.293 7.793z"/>
+                    </svg>
+
+                    <h5 class="card-title text-info mb-1 text-center">Manage Categories</h5>
+                    <p class="card-text text-muted small mb-0 text-center">Add or edit service categories.</p>
+                </a>
             </div>
         </div>
 
         <div class="col-lg-3 col-md-6">
-            <div class="card h-100">
-                <div class="card-body text-center d-flex flex-column justify-content-center p-4">
-                    <h5 class="card-title">Manage Users</h5>
-                    <p class="card-text text-muted small">Add, Edit, or deactivate cashier accounts.</p>
-                    <a href="{% url 'manage-users' %}" class="btn btn-primary mt-2">Go to Users</a>
-                </div>
+            <div class="card h-100 shadow-sm card-button">
+                <a href="{% url 'manage-users' %}" 
+                   class="d-flex flex-column justify-content-center w-100 h-100 p-4 text-decoration-none">
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#6f42c1" class="bi bi-people-fill mb-3 mx-auto" viewBox="0 0 16 16">
+                      <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+                    </svg>
+
+                    <h5 class="card-title text-purple mb-1 text-center" style="color: #6f42c1;">Manage Users</h5>
+                    <p class="card-text text-muted small mb-0 text-center">Add, Edit, or deactivate cashiers.</p>
+                </a>
             </div>
         </div>
 
         <div class="col-lg-3 col-md-6">
-            <div class="card h-100">
-                <div class="card-body text-center d-flex flex-column justify-content-center p-4">
-                    <h5 class="card-title">Sales Report</h5>
-                    <p class="card-text text-muted small">View and download sales reports.</p>
-                    <a href="{% url 'sales-report' %}" class="btn btn-primary mt-2">Go to Reports</a>
-                </div>
+            <div class="card h-100 shadow-sm card-button">
+                <a href="{% url 'sales-report' %}" 
+                   class="d-flex flex-column justify-content-center w-100 h-100 p-4 text-decoration-none">
+                   
+                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#28a745" class="bi bi-bar-chart-line-fill mb-3 mx-auto" viewBox="0 0 16 16">
+                      <path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h1V7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7h1V2z"/>
+                    </svg>
+
+                    <h5 class="card-title text-success mb-1 text-center">Sales Report</h5>
+                    <p class="card-text text-muted small mb-0 text-center">View and download EOD reports.</p>
+                </a>
             </div>
         </div>
 
