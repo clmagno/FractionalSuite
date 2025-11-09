@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sales Report - {{ asset.name }}</title>
+    <style>
+        /* This CSS is for the PDF, not a webpage */
+        @page {
+            size: A4;
+            margin: 2.5cm 1.5cm; /* Standard A4 margins */
+            
+            /* We can add footers later */
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-family: Arial, sans-serif;
+                font-size: 10pt;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 24pt;
+            margin: 0;
+            text-align: right;
+        }
+        h2 {
+            font-size: 18pt;
+            margin: 0;
+            color: #7f8c8d;
+        }
+        .header {
+            margin-bottom: 40px;
+        }
+        .header-left {
+            width: 60%;
+            float: left;
+        }
+        .header-right {
+            width: 40%;
+            float: right;
+            text-align: right;
+        }
+        .report-info {
+            margin-bottom: 30px;
+            font-size: 12pt;
+        }
+        
+        /* Main Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        thead th {
+            background-color: #ecf0f1;
+            color: #34495e;
+            font-size: 10pt;
+            text-transform: uppercase;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .text-right {
+            text-align: right;
+        }
+        
+        /* Summary */
+        .summary {
+            margin-top: 30px;
+            width: 50%;
+            float: right;
+            font-size: 14pt;
+        }
+        .summary th {
+            text-align: right;
+            width: 50%;
+            border: none;
+            padding: 5px;
+        }
+        .summary td {
+            text-align: right;
+            border: none;
+            padding: 5px;
+        }
+        .total {
+            font-weight: bold;
+            font-size: 16pt;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h2>{{ asset.name }}</h2>
+            <p style="color: #7f8c8d;">
+                {{ asset.location }}<br>
+                TIN: {{ asset.tin_number }}
+            </p>
+        </div>
+        <div class="header-right">
+            <h1>SALES REPORT</h1>
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div class="report-info">
+        <strong>Report Date:</strong> {{ today }}<br>
+        <strong>Period Covered:</strong> {{ date_from }} to {{ date_to }}
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Date/Time</th>
+                <th>Sale ID</th>
+                <th>Item</th>
+                <th>Variant</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Line Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sale_items %}
+            <tr>
+                <td>{{ item.sale.created_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ item.sale.pk }}</td>
+                <td>{{ item.variant.item.name }}</td>
+                <td>{{ item.variant.name }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">₱{{ item.price_at_sale|floatformat:2 }}</td>
+                <td class="text-right">₱{{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center;">No sales found for this period.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary">
+        <table>
+            <tbody>
+                <tr>
+                    <th>VATable Sales:</th>
+                    <td>₱{{ vatable_sales|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>VAT (12%):</th>
+                    <td>₱{{ vat_amount|floatformat:2 }}</td>
+                </tr>
+                <tr class="total">
+                    <th>Total Sales:</th>
+                    <td>₱{{ total_sales|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>
