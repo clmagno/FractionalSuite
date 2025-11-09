@@ -106,9 +106,11 @@
                         {% for item in cart_items %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h6 class="my-0">{{ item.name }}</h6>
+                                    <h6 class="my-0">{{ item.quantity }} x {{ item.name }}</h6>
                                 </div>
-                                <span class="text-muted me-3">₱{{ item.price|floatformat:2 }}</span>
+                                <span class="text-muted me-3">
+                                    ₱{{ item.line_total|floatformat:2 }}
+                                </span>
                                 <form method="post" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="variant_id" value="{{ item.id }}">

@@ -5,6 +5,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Deal, Asset, Transaction, SaleItem, Category, Holding, Item, Variant, Sale
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from decimal import Decimal
 from django import forms
 # --- 2. THIS IS THE FIX ---
 # We now import ItemForm, VariantForm (and remove ServiceForm)
@@ -15,7 +16,7 @@ from .forms import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import CreateView, UpdateView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import HttpResponseForbidden
@@ -502,20 +503,25 @@ def pos_view(request, pk):
     
     # --- 4. Handle POST requests (Add, Remove, Checkout) ---
     if request.method == 'POST':
-        
-        # --- ACTION: Add Variant to Cart ---
+
+    # --- ACTION: Add Variant to Cart ---
         if 'add_to_cart' in request.POST:
             variant_id = request.POST.get('variant_id')
             variant = get_object_or_404(Variant, pk=variant_id)
-            
-            # Use variant_id as the unique key in the cart
-            cart_item = {
-                'id': variant.id,
-                'name': f"{variant.item.name} ({variant.name})",
-                'price': float(variant.price)
-            }
-            cart[str(variant_id)] = cart_item # Use string key for session
-            messages.success(request, f"Added '{cart_item['name']}' to cart.")
+
+            # --- THIS IS THE NEW CART LOGIC ---
+            if variant_id in cart:
+                # If item is already in cart, just add 1 to quantity
+                cart[variant_id]['quantity'] += 1
+            else:
+                # If new, add to cart with quantity 1
+                cart[variant_id] = {
+                    'id': variant.id,
+                    'name': f"{variant.item.name} ({variant.name})",
+                    'price': float(variant.price),
+                    'quantity': 1
+                }
+            messages.success(request, f"Added '{cart[variant_id]['name']}' to cart.")
 
         # --- ACTION: Remove from Cart ---
         elif 'remove_from_cart' in request.POST:
@@ -530,39 +536,43 @@ def pos_view(request, pk):
             if not cart:
                 messages.error(request, "Cannot check out an empty cart.")
             else:
-                # 1. Create the main Sale (Receipt)
                 sale = Sale.objects.create(
                     deal=deal, 
                     cashier=request.user, 
                     customer_name=customer_name
                 )
-                
-                # 2. Add all cart items as SaleItem records
+
+                # Update checkout to include quantity
                 for variant_id, item in cart.items():
                     SaleItem.objects.create(
                         sale=sale,
                         variant=get_object_or_404(Variant, pk=variant_id),
-                        price_at_sale=item['price']
+                        price_at_sale=item['price'],
+                        quantity=item['quantity'] # <-- Add quantity
                     )
-                
-                # 3. Finalize total and create the one Transaction
+
                 sale.finalize_and_create_transaction()
-                
-                # 4. Clear the cart
-                cart = {}
-                messages.success(request, f"Sale #{sale.pk} created successfully for ₱{sale.total_amount}.")
-                # We will redirect to a receipt page next
-                # For now, just reload the POS
-                
+                cart = {} # Clear the cart
+
+                # --- THIS IS THE NEW REDIRECT ---
+                # Redirect to the new receipt page instead of reloading
+                request.session['cart'] = cart
+                messages.success(request, "Sale finalized successfully.")
+                return redirect('sale-receipt', pk=sale.pk)
+
         request.session['cart'] = cart
-        redirect_url = f"{reverse('pos-view', kwargs={'pk': pk})}"
-        if active_category_id:
-            redirect_url += f"?category={active_category_id}"
-        return redirect(redirect_url)
+        # ... (rest of the POST handling) ...
+
+    # --- 5. Prepare Cart Data for Display (UPDATED) ---
+    cart_items = []
+    cart_total = 0
     
-    # --- 5. Prepare Cart Data for Display (GET request) ---
-    cart_items = cart.values()
-    cart_total = sum(item['price'] for item in cart_items)
+    # We now loop through the cart to pre-calculate totals
+    for item in cart.values():
+        line_total = item['price'] * item['quantity']
+        item['line_total'] = line_total # Add the new key to the dictionary
+        cart_total += line_total
+        cart_items.append(item)
     
     context = {
         'deal': deal,
@@ -570,7 +580,7 @@ def pos_view(request, pk):
         'items': items,
         'categories': categories,
         'active_category_id': active_category_id,
-        'cart_items': cart_items,
+        'cart_items': cart_items, # This now contains 'line_total'
         'cart_total': cart_total,
     }
     return render(request, 'deals/pos_terminal.html', context)
@@ -639,3 +649,39 @@ class CategoryUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = f"Edit Category: {self.object.name}"
         return context
+@login_required
+def sale_receipt_view(request, pk):
+    """
+    Displays a printable receipt for a completed sale.
+    """
+    sale = get_object_or_404(Sale, pk=pk)
+    
+    # --- Permission Check ---
+    # Allow the cashier who made the sale, or any Manager/Owner of the asset
+    profile = request.user.profile
+    asset = sale.deal.asset
+    
+    is_cashier = (profile.role == 'CASHIER' and request.user == sale.cashier)
+    is_manager = (profile.role == 'MANAGER' and profile.assigned_asset == asset)
+    is_owner = (profile.role == 'OWNER')
+    
+    if not (is_cashier or is_manager or is_owner):
+        return HttpResponseForbidden("You do not have permission to view this receipt.")
+        
+    # --- VAT Calculations (for PH VAT-Inclusive) ---
+    # Total includes 12% VAT.
+    # VATable Sales = Total / 1.12
+    # VAT = Total - VATable Sales
+    total_amount = sale.total_amount
+    vatable_sales = total_amount / Decimal('1.12')
+    vat_amount = total_amount - vatable_sales
+    
+    context = {
+        'sale': sale,
+        'asset': asset,
+        'deal': sale.deal,
+        'sale_items': sale.items.all(),
+        'vatable_sales': vatable_sales,
+        'vat_amount': vat_amount,
+    }
+    return render(request, 'deals/sale_receipt.html', context)

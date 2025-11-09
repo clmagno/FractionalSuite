@@ -63,7 +63,23 @@
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     
     {% block scripts %}
-    {% endblock %} 
+    <script>
+        // Wait for the document to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find all alerts that are 'alert-success' and 'alert-dismissible'
+            var successAlerts = document.querySelectorAll('.alert-success.alert-dismissible');
+            
+            successAlerts.forEach(function(alert) {
+                // Set a timer for 4000 milliseconds (4 seconds)
+                setTimeout(function() {
+                    // Create a new Bootstrap Alert instance and call 'close'
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 800);
+            });
+        });
+    </script>
+    {% endblock %}
     
 </body>
 </html>

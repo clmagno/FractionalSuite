@@ -17,8 +17,11 @@ class Asset(models.Model):
     
     name = models.CharField(max_length=255)
     asset_type = models.CharField(max_length=50, choices=ASSET_TYPES)
-    location = models.CharField(max_length=255, blank=True)
+    location = models.CharField(max_length=255, blank=True, help_text="Full business address")
+    
     description = models.TextField(blank=True)
+    tin_number = models.CharField(max_length=20, blank=True, null=True, help_text="e.g., 000-000-000-001")
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -254,7 +257,10 @@ class Sale(models.Model):
         a single, corresponding INCOME Transaction.
         """
         # Calculate total from items
-        total = self.items.aggregate(total=Sum('price_at_sale'))['total'] or 0.00
+        total = 0
+        for item in self.items.all():
+            total += item.total_price
+            
         self.total_amount = total
         self.save()
         
@@ -267,6 +273,7 @@ class Sale(models.Model):
             transaction_date=self.created_at
         )
         return self
+        
 
 
 class SaleItem(models.Model):
@@ -275,15 +282,12 @@ class SaleItem(models.Model):
   e.g., "1 x Manicure"
   """
   sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name="items")
-    
-    # --- FIX ---
-    # A SaleItem links to the specific VARIANT that was sold
   variant = models.ForeignKey(Variant, on_delete=models.PROTECT)
-  
-  # We store the price at the time of sale
+  quantity = models.PositiveIntegerField(default=1)
   price_at_sale = models.DecimalField(max_digits=10, decimal_places=2) 
   
+  @property
+  def total_price(self):
+    return self.quantity * self.price_at_sale
   def __str__(self):
-        # --- FIX ---
-        # Get the name from the variant's item and the variant's name
-    return f"{self.variant.item.name} ({self.variant.name}) for Sale #{self.sale.pk}"
+    return f"{self.quantity} x {self.variant.item.name} ({self.variant.name}) for Sale #{self.sale.pk}"

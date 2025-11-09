@@ -59,4 +59,6 @@ urlpatterns = [
     path('categories/<int:pk>/edit/', 
          CategoryUpdateView.as_view(), 
          name='category-edit'),
+     # /app/sale/1/receipt/
+    path('sale/<int:pk>/receipt/', views.sale_receipt_view, name='sale-receipt'),
 ]

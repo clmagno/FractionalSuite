@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sale Receipt #{{ sale.pk }}</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 300px; /* Standard 80mm thermal paper width */
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .header { font-size: 1.1em; font-weight: bold; }
+        .subheader { font-weight: bold; }
+        
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 2px 0;
+        }
+        
+        .item-row td {
+            padding-bottom: 5px;
+        }
+        
+        .summary-row td {
+            font-weight: bold;
+            padding-top: 5px;
+        }
+        
+        .print-button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            font-family: Arial, sans-serif;
+            cursor: pointer;
+        }
+
+        /* This hides the button when printing */
+        @media print {
+            .no-print {
+                display: none;
+            }
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header text-center">
+        {{ asset.name|upper }}
+    </div>
+    <div class="text-center">{{ asset.location }}</div>
+    <div class="text-center">TIN: {{ asset.tin_number }} VAT-REG</div>
+    <div class="text-center">Tel: {{ asset.phone_number }}</div>
+
+    <div class="divider"></div>
+    
+    <div>Date: {{ sale.created_at|date:"m/d/Y H:i A" }}</div>
+    <div>Cashier: {{ sale.cashier.username }}</div>
+    <div>Customer: {{ sale.customer_name }}</div>
+    <div>Sale #: {{ sale.pk }}</div>
+
+    <div class="divider"></div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th class="text-left">QTY</th>
+                <th class="text-left">ITEM</th>
+                <th class="text-right">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sale_items %}
+            <tr class="item-row">
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.variant.item.name }} ({{ item.variant.name }})</td>
+                <td class="text-right">₱{{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <table>
+        <tbody>
+            <tr class.="summary-row">
+                <td>TOTAL AMOUNT DUE:</td>
+                <td class.="text-right">₱{{ sale.total_amount|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <table>
+        <tbody>
+            <tr>
+                <td>VATable Sales:</td>
+                <td class="text-right">₱{{ vatable_sales|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>VAT-Exempt Sales:</td>
+                <td class="text-right">₱0.00</td>
+            </tr>
+            <tr>
+                <td>VAT (12%):</td>
+                <td class="text-right">₱{{ vat_amount|floatformat:2 }}</td>
+            </tr>
+            <tr class="summary-row">
+                <td>TOTAL (PHP):</td>
+                <td class="text-right">₱{{ sale.total_amount|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <div class="text-center">
+        THIS IS A SYSTEM-GENERATED
+        SALES INVOICE.
+        <br>
+        Thank you!
+    </div>
+    
+    <div class="no-print">
+        <button class="print-button" onclick="window.print()">Print Receipt</button>
+        <a href="{% url 'pos-view' pk=deal.pk %}" class="print-button" style="text-align: center; display: block; text-decoration: none; background-color: #6c757d; margin-top: 10px;">
+            Start New Sale
+        </a>
+    </div>
+
+</body>
+</html>
